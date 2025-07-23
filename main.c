@@ -1,19 +1,15 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#define Max_Num_city 100
+ #include <time.h>
+#define Max_Num_city 1000
 #define Max_name_city 50
-#define infinty 999
-
-struct vertice{
-       char  city1[Max_name_city];
-       char  city2[Max_name_city];
-        int wight;
-};
+#define infinty 9999
 
 struct nodeHeap{
 
     int wight;
+    // index of city in arr cityName
     int node;
     int node2;
 };
@@ -24,12 +20,17 @@ struct Heap{
 
 
 };
-int graph[Max_Num_city][Max_Num_city]={0};
+int graph[Max_Num_city][Max_Num_city];
 char cityName[Max_Num_city][Max_name_city];
+int *totelOfK;
+int *totelOfP;
 
 int main()
 {
-    printf("Hello .\n");
+       clock_t start, end;
+       double timeOfK;
+double timeOfP;
+    printf("Hello to my project.\n");
     int x;
     do
     {
@@ -43,13 +44,21 @@ int main()
           Loadcities();
             break;
             case 2:
-         ApplyPrimAlgorithm();
+            start=clock();
+            ApplyPrimAlgorithm();
+            end=clock();
+            timeOfP = (double)(end - start) / CLOCKS_PER_SEC;
+            printf("\nexecution time \t\t\t%.3fs\n ",timeOfP);
             break;
             case 3:
-          Loadcities();
+             start=clock();
+             ApplyKruskalAlgorithm();
+             end=clock();
+             timeOfK = (double)(end - start) / CLOCKS_PER_SEC;
+             printf("\nexecution time \t\t\t%.5fs\n ",timeOfK);
             break;
             case 4:
-          Loadcities();
+          Comparethetwoalgorithms(timeOfP,timeOfK);
             break;
 
         case 5:
@@ -70,25 +79,18 @@ void printmenu()
      printf("\n================ MENU ================\n");
     printf(
         "\n1. Load cities."
-        "\n2. Apply Primís Algorithm."
-        "\n3. Apply Kruskalís Algorithm."
+        "\n2. Apply Prim s Algorithm."
+        "\n3. Apply Kruskal s Algorithm."
         "\n4. Compare the two algorithms."
         "\n5. Exit. ");
 }
+// add edge in the matrix
 void addedge(int graph[Max_Num_city][Max_Num_city],int i,int j,int w ){
        graph[i][j]=w;
        graph[j][i]=w;
 
 }
-
-void displayMatrix(int graph[Max_Num_city][Max_Num_city], int cityCount) {
-    for (int i = 0; i < cityCount; i++) {
-        for (int j = 0; j < cityCount; j++) {
-            if (graph[i][j] != 0)
-                printf("From %-15s to %-15s: %3d km\n", cityName[i], cityName[j], graph[i][j]);
-        }
-    }
-}
+// to find the index of city if its exist if its new make new index for it
 int citynumber(char city[Max_name_city], int *cityCount) {
     for (int i = 0; i < *cityCount; i++) {
         if (strcmp(city, cityName[i]) == 0)
@@ -139,9 +141,8 @@ void  Loadcities(){
 
             token = strtok(NULL, "#");
 }
-if (strlen(name1) == 0 || strlen(name2) == 0 || wight <= 0) {
-    continue;
-}
+
+// to fill the matrix
 int from=citynumber(name1,&cityCount);
 int to=citynumber(name2,&cityCount);
  addedge( graph,from,to,wight );
@@ -150,20 +151,16 @@ int to=citynumber(name2,&cityCount);
         }
 
 
-  //  if (cityCount < 50 || edgeCount < 200) {
-  //  printf("Error: The graph must have at least 50 cities and 200 connections!\n");
-   // exit(1);
-    //   }
-   // else{
+   if (cityCount < 50 || edgeCount < 200) {
+   printf("Error: The graph must have at least 50 cities and 200 connections!\n");
+   exit(1);
+      }
+    else{
 
-       printf("\nThe task was loaded successfully :)\n");
+       printf("\nThe city was loaded successfully :)\n");
        printf("\n***Graph order (number of cities): %d\n", cityCount);
        printf("\n***Graph size (number of edges): %d\n\n", edgeCount);
-
-
-
-    displayMatrix(graph,cityCount);
-  // }
+}
 
 
     fclose(pF);
@@ -176,6 +173,7 @@ struct nodeHeap * makeHeapNode(int wight, int node) {
     nod->node = node;
     return nod;
 }
+// create empty heap
 struct Heap* createMinHeap() {
   struct  Heap* heap = (struct Heap*)malloc(sizeof(struct Heap));
     heap->sizeOfHeap = 0;
@@ -189,11 +187,12 @@ void swap(struct nodeHeap *a, struct nodeHeap *b)
     *a = *b;
     *b = tmp;
 }
+// to make min heap
 void heapMin(struct Heap* heap, int i)
 {
     int min = i;
-    int l = 2 * i;
-    int r = 2 * i + 1;
+    int l = 2 * i+1;
+    int r = 2 * i + 2;
 
     // If left child is smaller than root
     if (l < heap->sizeOfHeap && heap->arr[l]->wight < heap->arr[min]->wight)
@@ -208,10 +207,11 @@ void heapMin(struct Heap* heap, int i)
         heapMin(heap, min);
     }
 }
+// bulid the min tree
 void buildHeap(struct Heap* heap)
 {
 
-    int startIdx = (heap->sizeOfHeap / 2) - 1;
+    int startIdx = (heap->sizeOfHeap / 2)-1 ;
     for (int i = startIdx; i >= 0; i--) {
         heapMin(heap, i);
     }
@@ -219,20 +219,15 @@ void buildHeap(struct Heap* heap)
 int isEmpty(struct Heap* heap) {
     return heap->sizeOfHeap == 0;
 }
-void printHeap(int arr[], int size)
-{
-    printf("Array representation of Heap is:\n");
-
-    for (int i = 0; i < size && arr[i]!=NULL; ++i)
-        printf("%-2d  km\t\n",arr[i]);
-}
+// to get the index of the city
 int getCityIndex(char name[]) {
-    for (int i = 0; i <= Max_Num_city; i++) {
+    for (int i = 0; i <Max_Num_city; i++) {
         if (strcmp(name, cityName[i]) == 0)
             return i;
     }
     return -1;
 }
+// to delet the root and make them min heap
 void deleteMin(struct Heap* heap) {
     if (heap->sizeOfHeap == 0)
         return;
@@ -240,20 +235,90 @@ void deleteMin(struct Heap* heap) {
     heap->indexOfHeap[(heap->arr[heap->sizeOfHeap - 1])->node] = 0;
     heap->sizeOfHeap--;
     heapMin(heap, 0);
+  // buildHeap(heap);
 }
-void printprim(int parent[], int key[], int cityCount)
+
+void MST_prim(int graph[Max_Num_city][Max_Num_city],char sro_city [Max_name_city]){
+   printf("\n=== Minimum Spanning Tree using Prim s Algorithm ===\n\n");
+    int cityNumber=0;
+    int total=0;
+    // find the number of city
+    for(int i=0;i<Max_Num_city;i++){
+            if(strlen(cityName[i])!=0)
+            cityNumber++;
+    }
+
+    int parent[cityNumber];
+    int key[cityNumber];
+    int Visted[cityNumber];
+    struct Heap *heapList=createMinHeap();
+
+    for(int i=0;i<cityNumber;i++)
+  {
+        key[i]=infinty;
+        Visted[i]=0;
+        parent[i] = -1;
+
+  }
+  // find the index of src city to start with it
+  int indexofcity=getCityIndex(sro_city);
+  if(indexofcity==-1)
+  {
+      printf("erorr:the city not found ");
+      return 0;
+  }
+  key[indexofcity]=0;
+  parent[indexofcity] = indexofcity;
+
+
+ for (int i = 0; i <cityNumber; i++) {
+    struct nodeHeap* n = makeHeapNode(key[i], i);
+    heapList->arr[i] = n;
+    heapList->indexOfHeap[i] = i;
+}
+heapList->sizeOfHeap = cityNumber;
+
+buildHeap(heapList);
+
+  while(!isEmpty(heapList)){
+    struct nodeHeap* n = heapList->arr[0];
+
+// delete the node that we visted
+deleteMin(heapList) ;
+Visted[n->node]=1;
+  for (int nextIndex = 0; nextIndex < cityNumber; nextIndex++) {
+    if (Visted[nextIndex] == 0 && graph[n->node][nextIndex] && graph[n->node][nextIndex] < key[nextIndex] ) {
+        key[nextIndex] = graph[n->node][nextIndex];
+        parent[nextIndex] = n->node;
+        for (int i = 0; i < heapList->sizeOfHeap; i++) {
+            if (heapList->arr[i]->node == nextIndex) {
+                heapList->arr[i]->wight = key[nextIndex];
+                break;
+            }
+        }
+
+    }
+}
+
+buildHeap(heapList);
+  }
+ totelOfP=totelprim(parent,key,cityNumber);
+
+ clearHeap(heapList);
+}
+int totelprim(int parent[], int key[], int cityCount)
 {
-    printf("\n*** Minimum Spanning Tree (MST) using Primís Algorithm ***\n\n");
   int totalWeight = 0;
     for (int i = 0; i < cityCount; i++) {
 
          if (parent[i] == -1 || i == parent[i])
              continue;
-        printf("from %-20s to %-20s %3d km\n", cityName[parent[i]], cityName[i], key[i]);
+             printf("from %-20s to %-20s %3d km\n", cityName[parent[i]], cityName[i], key[i]);
         totalWeight += key[i];
     }
 
     printf("\n>> Total cost of MST: %d km\n", totalWeight);
+    return totalWeight;
 }
 
 
@@ -265,9 +330,6 @@ scanf("%s",nameOfCity);
 MST_prim(graph,nameOfCity);
 
 }
-
-
-//  ÂÌ∆… ﬂ· —√” ·ÌﬂÊ‰ ›Ì „Ã„Ê⁄… Œ«’…
 void makeSet(int parent[], int rank[], int n) {
     for (int i = 0; i < n; i++) {
         parent[i] = i;
@@ -275,65 +337,119 @@ void makeSet(int parent[], int rank[], int n) {
     }
 }
 
-// ≈ÌÃ«œ «·Ã–— («·„„À·) ·„Ã„Ê⁄… «·—√”
+
 int findParent(int parent[], int u) {
     if (parent[u] != u)
         parent[u] = findParent(parent, parent[u]);
     return parent[u];
 }
 
-//  ÊÕÌœ „Ã„Ê⁄ Ì‰ ≈–« ﬂ«‰ « „Œ ·› Ì‰
 void unionSet(int u, int v, int parent[], int rank[]) {
     u = findParent(parent, u);
     v = findParent(parent, v);
 
-    if (u == v) return;
+    if (u == v)
+        return;
 
     if (rank[u] < rank[v]) {
         parent[u] = v;
-    } else if (rank[u] > rank[v]) {
+    } else if (rank[u] >= rank[v]) {
         parent[v] = u;
-    } else {
+    }
+    else {
         parent[v] = u;
         rank[u]++;
     }
 }
+int mst_Kruskal(int citynumber,int edgeCount,int edge[][3]){
 
-// ----------- KRUSKAL ALGORITHM ------------
-
-int kruskalUsingHeap(int n, int edgeCount, int edges[][3]) {
-    struct Heap* heap = createMinHeap();
-
-    // Ê÷⁄ «·ÕÊ«› ›Ì «·ÂÌ» (Õ”» «·Ê“‰)
-    for (int i = 0; i < edgeCount; i++) {
-             for (int j = 0; j < edgeCount; j++)
-        heap->arr[heap->sizeOfHeap++] = makeHeapNode(edges[i][j], i);
+    int parent[citynumber];
+    int rank[citynumber];
+    struct Heap *heapList=createMinHeap();
+    for(int i=0;i<edgeCount;i++){
+        heapList->arr[i]=makeHeapNode(edge[i][2],i);
+       heapList->sizeOfHeap++;
     }
-    buildHeap(heap);
+     buildHeap(heapList);
+     makeSet(parent,rank, citynumber);
+    struct nodeHeap*array[edgeCount];
+     int totel=0;
+        int i=0;
+        int size=0;
+     while(!isEmpty(heapList)){
+        int u=edge[heapList->arr[0]->node][0];
+        int v=edge[heapList->arr[0]->node][1];
+        int w=edge[heapList->arr[0]->node][2];
 
-    int parent[MAX_VERTICES], rank[MAX_VERTICES];
-    makeSet(parent, rank, n);
-
-    int minCost = 0, edgesUsed = 0;
-
-    while (!isEmpty(heap) && edgesUsed < n - 1) {
-        struct nodeHeap* minEdge = heap->arr[0];
-        int edgeIndex = minEdge->node;
-
-        int u = edges[edgeIndex][0];
-        int v = edges[edgeIndex][1];
-        int w = edges[edgeIndex][2];
-
-        // ≈–« ·„ Ì‘ﬂ· œÊ—…
-        if (findParent(parent, u) != findParent(parent, v)) {
+        if(findParent(parent,u)!=findParent(parent,v)){
             unionSet(u, v, parent, rank);
-            minCost += w;
-            edgesUsed++;
-            printf("Edge included: %d -- %d (weight = %d)\n", u, v, w);
+            totel += w;
+            array[i] = (struct nodeHeap*)malloc(sizeof(struct nodeHeap));
+            array[i]->wight=w;
+            array[i]->node=u;
+            array[i]->node2=v;
+            size++;
+            i++;
         }
+        deleteMin(heapList);
+     }
+for(int i=0;i<size;i++)
+   {
+       if(array[i]!=NULL)
+         printf("from:%-20s to:%-15s %-2d km\n", cityName[array[i]->node],cityName[array[i]->node2] , array[i]->wight);
+   }
+   printf("\nTotal weight of MST (Kruskal): %d km\n", totel);
+  for(int i=0;i<size;i++)
+   {
+       free(array[i]);
+   }
+  clearHeap(heapList);
+  return totel;
 
-        deleteMin(heap);
-    }
 
-    return minCost;
 }
+void ApplyKruskalAlgorithm(){
+    int edge[10000][3];
+    int edgeCount = 0;
+
+     int cityNumber=0;
+for(int i=0;i<Max_Num_city;i++){
+    if(strlen(cityName[i])!=0)
+        cityNumber++;
+}
+    for(int i=0;i<Max_Num_city;i++){
+        for(int j=i+1;j<Max_Num_city;j++){
+            if(graph[i][j]!=0){
+                edge[edgeCount][0]=i;
+                edge[edgeCount][1]=j;
+                edge[edgeCount][2]=graph[i][j];
+                edgeCount++;
+
+            }
+        }
+    }
+    totelOfK=mst_Kruskal(cityNumber,edgeCount, edge);
+
+
+
+}
+void Comparethetwoalgorithms(double timeOfP,double timeOfK){
+    printf("\nalgorithms\t\t prim algorithms       Kruskal algorithms\n");
+    printf("totel cost \t\t\t%d km\t\t\t%d km\n",totelOfP,totelOfK);
+    printf("execution time \t\t\t%.3fs\t\t\t%.3fs\n",timeOfP,timeOfK);
+
+    if(timeOfP> timeOfK)
+        printf("the Kruskal algorithms is faster\n");
+    else if(timeOfP < timeOfK)
+        printf("the prim algorithms is faster\n");
+
+}
+void clearHeap(struct Heap* heap) {
+    for (int i = 0; i < heap->sizeOfHeap; i++) {
+        free(heap->arr[i]);
+        heap->arr[i] = NULL;
+    }
+    heap->sizeOfHeap = 0;
+}
+
+
